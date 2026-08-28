@@ -16,7 +16,7 @@ window.Games.bowling = {
         { ox: -14, oy: 170 }, { ox: 14, oy: 170 },
         { ox: -28, oy: 140 }, { ox: 0, oy: 140 }, { ox: 28, oy: 140 },
         { ox: -42, oy: 110 }, { ox: -14, oy: 110 }, { ox: 14, oy: 110 }, { ox: 42, oy: 110 }
-      ].map(p => ({ ...p, standing: true }));
+      ].map(p => ({ ...p, standing: true, phase: Math.random() * Math.PI * 2, fallTimer: 0 }));
     }
 
     function makeLane(index) {
@@ -58,7 +58,9 @@ window.Games.bowling = {
         vy: -speed,
         curve,
         power,
-        gutter: false
+        gutter: false,
+        spinAngle: 0,
+        trail: []
       };
     }
 
@@ -88,11 +90,16 @@ window.Games.bowling = {
 
     function update(dt) {
       lanes.forEach(lane => {
+        lane.pins.forEach(p => { if (p.fallTimer > 0) p.fallTimer = Math.max(0, p.fallTimer - dt); });
+
         if (!lane.ball) return;
         const b = lane.ball;
         b.vx += b.curve * dt;
         b.x += b.vx * dt;
         b.y += b.vy * dt;
+        b.spinAngle += (Math.hypot(b.vx, b.vy) / 30) * dt;
+        b.trail.push({ x: b.x, y: b.y });
+        if (b.trail.length > 10) b.trail.shift();
 
         const halfLane = laneWidth / 2 - 18;
         if (Math.abs(b.x - lane.centerX) > halfLane) {
@@ -107,6 +114,7 @@ window.Games.bowling = {
           lane.pins.forEach(p => {
             if (p.standing && Math.abs((lane.centerX + p.ox) - b.x) < knockRadius) {
               p.standing = false;
+              p.fallTimer = 0.6;
               knocked++;
             }
           });
@@ -135,16 +143,40 @@ window.Games.bowling = {
       ctx.fillRect(x0 + laneWidth - 34, 30, 14, H - 60);
 
       // pins
+      const now = performance.now() / 1000;
       lane.pins.forEach(p => {
-        if (!p.standing) return;
         const px = lane.centerX + p.ox, py = p.oy;
-        ctx.beginPath();
-        ctx.fillStyle = '#f4f1ea';
-        ctx.shadowColor = '#f4f1ea';
-        ctx.shadowBlur = 8;
-        ctx.arc(px, py, 8, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.shadowBlur = 0;
+        if (p.standing) {
+          const wobble = Math.sin(now * 2 + p.phase) * 0.05;
+          ctx.save();
+          ctx.translate(px, py);
+          ctx.rotate(wobble);
+          ctx.fillStyle = '#f4f1ea';
+          ctx.shadowColor = '#f4f1ea';
+          ctx.shadowBlur = 8;
+          ctx.beginPath();
+          ctx.ellipse(0, 0, 6, 9, 0, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.shadowBlur = 0;
+          ctx.strokeStyle = '#ff5d3d';
+          ctx.lineWidth = 1.5;
+          ctx.beginPath();
+          ctx.moveTo(-5, -2); ctx.lineTo(5, -2);
+          ctx.stroke();
+          ctx.restore();
+        } else if (p.fallTimer > 0) {
+          const t = 1 - p.fallTimer / 0.6; // 0 -> just hit, 1 -> fully fallen
+          ctx.save();
+          ctx.globalAlpha = 1 - t * 0.8;
+          ctx.translate(px, py);
+          ctx.rotate(t * (Math.PI / 2) * (p.ox >= 0 ? 1 : -1));
+          ctx.fillStyle = '#f4f1ea';
+          ctx.beginPath();
+          ctx.ellipse(0, t * 6, 6, 9, 0, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+          ctx.globalAlpha = 1;
+        }
       });
 
       // aim guide (only while no ball in flight)
@@ -162,6 +194,19 @@ window.Games.bowling = {
         ctx.globalAlpha = 1;
       }
 
+      // ball spin-trail
+      if (lane.ball && lane.ball.trail.length > 1) {
+        lane.ball.trail.forEach((pt, i) => {
+          const a = (i / lane.ball.trail.length) * 0.35;
+          ctx.globalAlpha = a;
+          ctx.fillStyle = color;
+          ctx.beginPath();
+          ctx.arc(pt.x, pt.y, 6, 0, Math.PI * 2);
+          ctx.fill();
+        });
+        ctx.globalAlpha = 1;
+      }
+
       // ball
       const by = lane.ball ? lane.ball.y : START_Y;
       const bx = lane.ball ? lane.ball.x : lane.centerX;
@@ -172,6 +217,17 @@ window.Games.bowling = {
       ctx.arc(bx, by, 11, 0, Math.PI * 2);
       ctx.fill();
       ctx.shadowBlur = 0;
+
+      // spin marker — a rotating highlight so the ball visibly spins as it rolls
+      if (lane.ball) {
+        const spin = lane.ball.spinAngle;
+        ctx.strokeStyle = 'rgba(255,255,255,0.65)';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(bx + Math.cos(spin) * 7, by + Math.sin(spin) * 7);
+        ctx.lineTo(bx + Math.cos(spin + Math.PI) * 7, by + Math.sin(spin + Math.PI) * 7);
+        ctx.stroke();
+      }
 
       // frame / result readout
       ctx.fillStyle = '#7b88a8';
