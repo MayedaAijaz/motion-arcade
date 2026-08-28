@@ -91,25 +91,51 @@ window.Games.balance = {
       ctx.arc(cx + lane.lean * 110, trackY, 7, 0, Math.PI * 2);
       ctx.fill();
 
-      // character — a simple balancing figure that leans with lane.lean
+      // character — a balancing figure with limbs that react to lane.lean
       const angle = lane.lean * 0.9;
+      const counter = -lane.lean * 1.1; // how far the arms swing opposite the lean, to "catch" balance
+      const figColor = lane.fell ? '#ff4757' : color;
+
       ctx.save();
       ctx.translate(cx, beamY);
       ctx.rotate(angle);
-      ctx.fillStyle = lane.fell ? '#ff4757' : color;
-      ctx.shadowColor = ctx.fillStyle;
-      ctx.shadowBlur = 14;
-      ctx.beginPath();
-      ctx.arc(0, -46, 14, 0, Math.PI * 2); // head
-      ctx.fill();
-      ctx.fillRect(-8, -34, 16, 34); // body
-      ctx.shadowBlur = 0;
-      // arms out for balance
-      ctx.strokeStyle = ctx.fillStyle;
+
+      ctx.strokeStyle = figColor;
+      ctx.fillStyle = figColor;
+      ctx.shadowColor = figColor;
+      ctx.lineCap = 'round';
+
+      // legs — a small stance, feet planted on the beam
       ctx.lineWidth = 5;
+      ctx.shadowBlur = 6;
+      ctx.beginPath(); ctx.moveTo(-3, -14); ctx.lineTo(-8, 0); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(3, -14); ctx.lineTo(8, 0); ctx.stroke();
+      ctx.shadowBlur = 0;
+
+      // torso
+      ctx.shadowBlur = 14;
+      ctx.fillRect(-8, -34, 16, 20);
+
+      // head
       ctx.beginPath();
-      ctx.moveTo(-30, -28); ctx.lineTo(30, -28);
-      ctx.stroke();
+      ctx.arc(0, -46, 14, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.shadowBlur = 0;
+
+      // arms — two jointed limbs (shoulder -> elbow -> hand) that swing opposite the lean
+      ctx.lineWidth = 5;
+      [-1, 1].forEach(side => {
+        ctx.save();
+        ctx.translate(0, -30); // shoulder
+        ctx.rotate(side * 0.9 + counter);
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.lineTo(side * 16, -4); // upper arm
+        ctx.lineTo(side * 30, -8); // forearm to hand
+        ctx.stroke();
+        ctx.restore();
+      });
+
       ctx.restore();
 
       ctx.fillStyle = '#7b88a8';
