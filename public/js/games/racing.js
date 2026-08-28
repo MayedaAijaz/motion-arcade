@@ -124,19 +124,84 @@ window.Games.racing = {
         ctx.shadowBlur = 0;
       });
 
-      // car
+      // rider
       const carScreenX = roadX0 + laneWidth / 2 + lane.carX * (laneWidth / 2 - CAR_W / 2 - 10);
       const carTop = H - 110;
-      ctx.fillStyle = lane.flash > 0 ? '#ff4757' : color;
-      ctx.shadowColor = ctx.fillStyle;
-      ctx.shadowBlur = 16;
-      ctx.fillRect(carScreenX - CAR_W / 2, carTop, CAR_W, CAR_H);
-      ctx.shadowBlur = 0;
+      const riderColor = lane.flash > 0 ? '#ff4757' : color;
+      const lean = Math.max(-0.35, Math.min(0.35, lane.tilt * 0.3));
+      drawRider(ctx, carScreenX, carTop + CAR_H, CAR_H, CAR_W, riderColor, lean);
 
       if (lane.crashed) {
         ctx.fillStyle = 'rgba(255,71,87,0.15)';
         ctx.fillRect(roadX0, 0, laneWidth, H);
       }
+    }
+
+    function drawRider(ctx, x, yBottom, height, width, color, lean) {
+      ctx.save();
+      ctx.translate(x, yBottom);
+      ctx.rotate(lean);
+
+      const wheelR = width * 0.2;
+      const rearX = -width * 0.3, frontX = width * 0.3;
+      const seatY = -height * 0.42;
+
+      // wheels
+      ctx.fillStyle = '#0e1424';
+      [rearX, frontX].forEach(wx => {
+        ctx.beginPath();
+        ctx.arc(wx, -wheelR, wheelR, 0, Math.PI * 2);
+        ctx.fill();
+      });
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 2.5;
+      ctx.shadowColor = color;
+      ctx.shadowBlur = 10;
+      [rearX, frontX].forEach(wx => {
+        ctx.beginPath();
+        ctx.arc(wx, -wheelR, wheelR, 0, Math.PI * 2);
+        ctx.stroke();
+      });
+      ctx.shadowBlur = 0;
+
+      // frame connecting wheels up to the seat
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 4;
+      ctx.shadowColor = color;
+      ctx.shadowBlur = 10;
+      ctx.beginPath();
+      ctx.moveTo(rearX, -wheelR * 2);
+      ctx.lineTo(0, seatY);
+      ctx.lineTo(frontX, -wheelR * 2);
+      ctx.stroke();
+      ctx.shadowBlur = 0;
+
+      // rider torso, leaning forward over the handlebars
+      ctx.fillStyle = color;
+      ctx.shadowColor = color;
+      ctx.shadowBlur = 14;
+      ctx.save();
+      ctx.translate(0, seatY);
+      ctx.rotate(-0.35);
+      ctx.fillRect(-6, -height * 0.32, 12, height * 0.32);
+      ctx.restore();
+
+      // head
+      const headX = width * 0.08, headY = seatY - height * 0.36;
+      ctx.beginPath();
+      ctx.arc(headX, headY, width * 0.17, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.shadowBlur = 0;
+
+      // arm reaching to the handlebar
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(headX, headY + width * 0.22);
+      ctx.lineTo(frontX * 0.9, -wheelR * 2.4);
+      ctx.stroke();
+
+      ctx.restore();
     }
 
     function draw(ctx) {
@@ -158,7 +223,7 @@ window.Games.racing = {
         if (mode === 'solo') return 'CRASHED — Distance: ' + Math.floor(lanes[0].distance);
         return lanes[0].distance === lanes[1].distance
           ? "IT'S A TIE!"
-          : (lanes[0].distance > lanes[1].distance ? 'PLAYER 1 WINS!' : 'PLAYER 2 WINS!');
+          : (lanes[0].distance > lanes[1].distance ? 'PLAYER 1 WINS!': 'PLAYER 2 WINS!');
       }
     };
   }
