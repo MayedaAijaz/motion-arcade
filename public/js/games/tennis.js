@@ -126,9 +126,9 @@ window.Games.tennis = {
       ctx.beginPath(); ctx.moveTo(0, H / 2); ctx.lineTo(W, H / 2); ctx.stroke();
       ctx.setLineDash([]);
 
-      // paddles
-      drawPaddle(ctx, state.p1.x, H - 36, performance.now() < state.flashUntil[0] ? '#ffffff' : '#00f0ff');
-      drawPaddle(ctx, state.p2.x, 36, performance.now() < state.flashUntil[1] ? '#ffffff' : '#ff2e9a');
+      // rackets
+      drawRacket(ctx, state.p1.x, H - 36, performance.now() < state.flashUntil[0] ? '#ffffff' : '#00f0ff', 1);
+      drawRacket(ctx, state.p2.x, 36, performance.now() < state.flashUntil[1] ? '#ffffff' : '#ff2e9a', -1);
 
       // ball
       ctx.beginPath();
@@ -150,12 +150,50 @@ window.Games.tennis = {
       ctx.globalAlpha = 1;
     }
 
-    function drawPaddle(ctx, x, y, color) {
-      ctx.fillStyle = color;
+    // facing: 1 = handle points down (bottom player), -1 = handle points up (top player)
+    function drawRacket(ctx, x, y, color, facing) {
+      const headRX = PADDLE_W / 2 * 0.8;
+      const headRY = 22;
+
+      ctx.save();
+      ctx.translate(x, y);
+
+      // handle
+      const handleLen = 28;
+      const hy0 = facing * (headRY - 2);
+      const hy1 = facing * (headRY - 2 + handleLen);
+      ctx.fillStyle = '#5a3d24';
+      ctx.fillRect(-4, Math.min(hy0, hy1), 8, Math.abs(hy1 - hy0));
+      ctx.fillStyle = '#3a2818';
+      ctx.fillRect(-4, Math.min(hy0, hy1), 8, Math.min(6, Math.abs(hy1 - hy0)));
+
+      // racket head (oval rim)
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 5;
       ctx.shadowColor = color;
       ctx.shadowBlur = 14;
-      ctx.fillRect(x - PADDLE_W / 2, y - PADDLE_H / 2, PADDLE_W, PADDLE_H);
+      ctx.beginPath();
+      ctx.ellipse(0, 0, headRX, headRY, 0, 0, Math.PI * 2);
+      ctx.stroke();
       ctx.shadowBlur = 0;
+
+      // strings (simple crosshatch)
+      ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+      ctx.lineWidth = 1;
+      for (let i = -2; i <= 2; i++) {
+        ctx.beginPath();
+        ctx.moveTo(i * headRX / 3, -headRY * 0.85);
+        ctx.lineTo(i * headRX / 3, headRY * 0.85);
+        ctx.stroke();
+      }
+      for (let j = -1; j <= 1; j++) {
+        ctx.beginPath();
+        ctx.moveTo(-headRX * 0.85, j * headRY / 2);
+        ctx.lineTo(headRX * 0.85, j * headRY / 2);
+        ctx.stroke();
+      }
+
+      ctx.restore();
     }
 
     return {
