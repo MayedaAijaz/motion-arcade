@@ -80,7 +80,9 @@ window.Games.fruit = {
         type: isBomb ? 'bomb' : 'fruit',
         color: isBomb ? '#2b2f3d' : FRUIT_COLORS[Math.floor(Math.random() * FRUIT_COLORS.length)],
         sliced: false,
-        radius: isBomb ? 20 : 17
+        radius: isBomb ? 20 : 17,
+        rotation: Math.random() * Math.PI * 2,
+        rotationSpeed: (Math.random() - 0.5) * 4
       });
     }
 
@@ -99,6 +101,7 @@ window.Games.fruit = {
           it.vy += gravity * dt;
           it.x += it.vx * dt;
           it.y += it.vy * dt;
+          it.rotation += it.rotationSpeed * dt;
         });
         lane.items = lane.items.filter(it => {
           if (it.sliced) return false;
@@ -122,6 +125,75 @@ window.Games.fruit = {
       if (lanes.every(l => l.done)) state.over = true;
     }
 
+    function drawItem(ctx, it) {
+      ctx.save();
+      ctx.translate(it.x, it.y);
+      ctx.rotate(it.rotation);
+
+      if (it.type === 'bomb') {
+        ctx.beginPath();
+        ctx.fillStyle = it.color;
+        ctx.shadowColor = it.color;
+        ctx.shadowBlur = 6;
+        ctx.arc(0, 0, it.radius, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+        ctx.strokeStyle = '#ffb800';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(0, -it.radius);
+        ctx.lineTo(6, -it.radius - 10);
+        ctx.stroke();
+        ctx.fillStyle = '#ffb800';
+        ctx.beginPath();
+        ctx.arc(6, -it.radius - 10, 2.5, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+        return;
+      }
+
+      // fruit body
+      ctx.beginPath();
+      ctx.fillStyle = it.color;
+      ctx.shadowColor = it.color;
+      ctx.shadowBlur = 14;
+      ctx.arc(0, 0, it.radius, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.shadowBlur = 0;
+
+      // soft shaded side (gives the round body some depth)
+      ctx.beginPath();
+      ctx.fillStyle = 'rgba(0,0,0,0.18)';
+      ctx.arc(it.radius * 0.35, it.radius * 0.35, it.radius * 0.85, 0, Math.PI * 2);
+      ctx.fill();
+
+      // glossy highlight
+      ctx.beginPath();
+      ctx.fillStyle = 'rgba(255,255,255,0.45)';
+      ctx.ellipse(-it.radius * 0.35, -it.radius * 0.4, it.radius * 0.32, it.radius * 0.2, -0.6, 0, Math.PI * 2);
+      ctx.fill();
+
+      // stem
+      ctx.strokeStyle = '#6b4a2b';
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.moveTo(0, -it.radius);
+      ctx.lineTo(2, -it.radius - 6);
+      ctx.stroke();
+
+      // leaf
+      ctx.fillStyle = '#3ddc6b';
+      ctx.save();
+      ctx.translate(2, -it.radius - 6);
+      ctx.rotate(-0.6);
+      ctx.beginPath();
+      ctx.ellipse(0, 0, 7, 3.5, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+
+      ctx.restore();
+    }
+
     function drawLane(ctx, lane) {
       const x0 = lane.index * laneWidth;
       const color = lane.index === 0 ? '#00f0ff' : '#ff2e9a';
@@ -129,23 +201,7 @@ window.Games.fruit = {
       ctx.fillStyle = lane.flash > 0 ? 'rgba(255,93,61,0.08)' : '#05070f';
       ctx.fillRect(x0, 0, laneWidth, H);
 
-      lane.items.forEach(it => {
-        ctx.beginPath();
-        ctx.fillStyle = it.color;
-        ctx.shadowColor = it.color;
-        ctx.shadowBlur = it.type === 'bomb' ? 6 : 14;
-        ctx.arc(it.x, it.y, it.radius, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.shadowBlur = 0;
-        if (it.type === 'bomb') {
-          ctx.strokeStyle = '#ffb800';
-          ctx.lineWidth = 2;
-          ctx.beginPath();
-          ctx.moveTo(it.x, it.y - it.radius);
-          ctx.lineTo(it.x + 6, it.y - it.radius - 10);
-          ctx.stroke();
-        }
-      });
+      lane.items.forEach(it => drawItem(ctx, it));
 
       lane.particles.forEach(p => {
         ctx.globalAlpha = Math.max(0, p.life / 0.35);
