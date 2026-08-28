@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>Controller - Motion Arcade</title>
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+<div class="controller-body">
+
+  <div id="joinView" class="stack" style="justify-content:center; height:100%;">
+    <h2 class="glow-title" style="font-size:18px;">JOIN ROOM</h2>
+    <input type="text" id="codeInput" maxlength="4" placeholder="CODE" autocomplete="off" />
+    <button id="joinBtn">Connect</button>
+    <p id="joinError" class="hint" style="color:var(--danger)"></p>
+  </div>
+
+  <div id="permissionView" class="stack" style="display:none; justify-content:center; height:100%;">
+    <h2 class="glow-title" style="font-size:18px;">ENABLE SENSORS</h2>
+    <p class="hint">Your phone needs permission to read motion &amp; orientation. Tap below, then hold your phone like a remote.</p>
+    <button id="enableBtn" class="btn-amber">Enable Motion &amp; Tilt</button>
+  </div>
+
+  <div id="playView" style="display:none; height:100%; display:none; flex-direction:column; gap:14px;">
+    <div class="row" style="justify-content:space-between; align-items:center;">
+      <span class="hint"><span class="status-dot" id="connDot"></span><span id="connLabel">connected</span></span>
+      <span class="hint" id="playerLabel">Player 1</span>
+    </div>
+
+    <div id="tiltUI">
+      <label id="tiltLabel">Tilt left / right</label>
+      <div class="tilt-track"><div class="tilt-dot" id="tiltDot" style="left:0px;"></div></div>
+    </div>
+
+    <div id="swingUI" class="stack" style="flex:1;">
+      <div class="swing-zone" id="swingZone">TAP + SWING<br/>YOUR PHONE</div>
+      <div>
+        <label>Power</label>
+        <div class="power-meter"><div class="power-meter-fill" id="powerFill"></div></div>
+      </div>
+    </div>
+
+    <p class="hint" id="gameHint"></p>
+  </div>
+
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script src="js/controller.js"></script>
+</body>
+</html>
