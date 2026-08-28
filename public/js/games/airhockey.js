@@ -133,8 +133,8 @@ window.Games.airhockey = {
       ctx.beginPath(); ctx.moveTo(W / 2 - GOAL_HALF, H - 20); ctx.lineTo(W / 2 + GOAL_HALF, H - 20); ctx.stroke();
       ctx.lineWidth = 1;
 
-      drawPaddle(ctx, state.p1, '#00f0ff');
-      drawPaddle(ctx, state.p2, '#ff2e9a');
+      drawMallet(ctx, state.p1, '#00f0ff');
+      drawMallet(ctx, state.p2, '#ff2e9a');
 
       const flashing = performance.now() < state.flashUntil;
       ctx.beginPath();
@@ -146,7 +146,8 @@ window.Games.airhockey = {
       ctx.shadowBlur = 0;
     }
 
-    function drawPaddle(ctx, p, color) {
+    function drawMallet(ctx, p, color) {
+      // flat base disc
       ctx.beginPath();
       ctx.fillStyle = color;
       ctx.shadowColor = color;
@@ -154,9 +155,32 @@ window.Games.airhockey = {
       ctx.arc(p.x, p.y, PADDLE_R, 0, Math.PI * 2);
       ctx.fill();
       ctx.shadowBlur = 0;
+
+      // dark rim on the flat base edge
+      ctx.strokeStyle = 'rgba(0,0,0,0.35)';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, PADDLE_R - 2, 0, Math.PI * 2);
+      ctx.stroke();
+
+      // rounded dome on top, shaded with a radial gradient so it reads as raised
+      const domeR = PADDLE_R * 0.62;
+      const grad = ctx.createRadialGradient(
+        p.x - domeR * 0.35, p.y - domeR * 0.35, domeR * 0.1,
+        p.x, p.y, domeR
+      );
+      grad.addColorStop(0, 'rgba(255,255,255,0.9)');
+      grad.addColorStop(0.45, color);
+      grad.addColorStop(1, 'rgba(0,0,0,0.3)');
+      ctx.beginPath();
+      ctx.fillStyle = grad;
+      ctx.arc(p.x, p.y, domeR, 0, Math.PI * 2);
+      ctx.fill();
+
+      // center grip knob
       ctx.beginPath();
       ctx.fillStyle = '#05070f';
-      ctx.arc(p.x, p.y, PADDLE_R * 0.45, 0, Math.PI * 2);
+      ctx.arc(p.x, p.y, domeR * 0.32, 0, Math.PI * 2);
       ctx.fill();
     }
 
