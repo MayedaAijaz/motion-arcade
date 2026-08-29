@@ -37,8 +37,8 @@ window.Games.balance = {
         lane.elapsed += dt;
 
         const difficulty = 1 + lane.elapsed / 25; // gusts get stronger & more frequent over time
-        const responsiveness = 7;
-        const damping = 3.2;
+        const responsiveness = 8;
+        const damping = 6.8; // overdamped: settles onto your tilt instead of ringing on its own
 
         const accel = (lane.target - lane.lean) * responsiveness - lane.vel * damping;
         lane.vel += accel * dt;
@@ -47,7 +47,7 @@ window.Games.balance = {
         lane.nextGust -= dt;
         if (lane.nextGust <= 0) {
           lane.nextGust = Math.max(0.8, (2.4 - lane.elapsed / 40)) / difficulty;
-          lane.vel += (Math.random() - 0.5) * 2.6 * difficulty;
+          lane.vel += (Math.random() - 0.5) * 1.6 * difficulty;
         }
 
         if (Math.abs(lane.lean) > 1) {
