@@ -41,13 +41,14 @@ window.Games.fruit = {
     }
 
     function slice(lane, payload) {
-      const radius = 65 + (payload.power || 0.5) * 45;
+      const radius = 75 + (payload.power || 0.5) * 55;
+      const bladeTop = H * 0.28, bladeBottom = H * 0.85; // matches the drawn blade span
       let hitBomb = false;
       lane.items.forEach(it => {
         if (it.sliced) return;
         const dx = it.x - lane.bladeX;
-        const dy = it.y - H * 0.55; // blade sweeps through the mid-lower playfield
-        if (Math.hypot(dx, dy) < radius) {
+        const withinBladeSpan = it.y > bladeTop - it.radius && it.y < bladeBottom + it.radius;
+        if (withinBladeSpan && Math.abs(dx) < radius) {
           it.sliced = true;
           if (it.type === 'bomb') {
             hitBomb = true;
@@ -218,8 +219,8 @@ window.Games.fruit = {
       ctx.shadowBlur = 12;
       ctx.lineWidth = 4;
       ctx.beginPath();
-      ctx.moveTo(lane.bladeX, H * 0.3);
-      ctx.lineTo(lane.bladeX, H * 0.8);
+      ctx.moveTo(lane.bladeX, H * 0.28);
+      ctx.lineTo(lane.bladeX, H * 0.85);
       ctx.stroke();
       ctx.shadowBlur = 0;
 
