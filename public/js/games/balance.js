@@ -23,7 +23,7 @@ window.Games.balance = {
     const lanes = [makeLane(0)];
     if (numLanes === 2) lanes.push(makeLane(1));
 
-    const state = { over: false, scores: { p1: 0, p2: mode === 'solo' ? 0 : 0 } };
+    const state = { over: false, scores: { p1: 0, p2: mode === 'solo' ? 0 : 0 }, fallenIndex: null };
 
     function handleInput(playerIndex, type, payload) {
       const lane = mode === 'duo' ? lanes[playerIndex] : (playerIndex === 0 ? lanes[0] : null);
@@ -54,6 +54,7 @@ window.Games.balance = {
           lane.lean = Math.sign(lane.lean);
           lane.fell = true;
           lane.done = true;
+          if (mode === 'duo' && state.fallenIndex === null) state.fallenIndex = lane.index;
         }
       });
 
@@ -61,7 +62,13 @@ window.Games.balance = {
       if (numLanes === 2) state.scores.p2 = Math.floor(lanes[1].elapsed * 10) / 10;
       else state.scores.p2 = 'n/a';
 
-      if (lanes.every(l => l.done)) state.over = true;
+      // Duo: the match ends the instant either player falls — whoever is still
+      // balancing at that moment has, by definition, lasted longer and wins.
+      if (mode === 'duo') {
+        if (state.fallenIndex !== null) state.over = true;
+      } else if (lanes[0].done) {
+        state.over = true;
+      }
     }
 
     function drawLane(ctx, lane) {
@@ -157,7 +164,7 @@ window.Games.balance = {
       get over() { return state.over; },
       winnerText() {
         if (mode === 'solo') return `You balanced for ${lanes[0].elapsed.toFixed(1)}s!`;
-        return lanes[0].elapsed === lanes[1].elapsed ? "IT'S A TIE!" : (lanes[0].elapsed > lanes[1].elapsed ? 'PLAYER 1 WINS!' : 'PLAYER 2 WINS!');
+        return state.fallenIndex === 0 ? 'PLAYER 2 WINS!' : 'PLAYER 1 WINS!';
       }
     };
   }
