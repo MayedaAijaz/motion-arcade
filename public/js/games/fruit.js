@@ -15,7 +15,7 @@ window.Games.fruit = {
         bladeX: index * laneWidth + laneWidth / 2,
         targetBladeX: index * laneWidth + laneWidth / 2,
         items: [],
-        lives: 3,
+        lives: 5,
         score: 0,
         spawnTimer: 0.6,
         elapsed: 0,
