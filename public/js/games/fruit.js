@@ -5,7 +5,9 @@ window.Games.fruit = {
     const W = canvas.width, H = canvas.height;
     const numLanes = mode === 'duo' ? 2 : 1;
     const laneWidth = W / numLanes;
-    const TARGET = 150; // friendly solo-mode benchmark
+    const TARGET = 100; // friendly solo-mode benchmark
+    const START_LIVES = 5;
+    const BOMB_PENALTY = 1; // costly, but no longer an instant game-over with more lives in play
     const FRUIT_COLORS = ['#ff5d3d', '#c8ff00', '#ffb800', '#ff2e9a', '#00f0ff'];
 
     function makeLane(index) {
@@ -15,7 +17,7 @@ window.Games.fruit = {
         bladeX: index * laneWidth + laneWidth / 2,
         targetBladeX: index * laneWidth + laneWidth / 2,
         items: [],
-        lives: 5,
+        lives: START_LIVES,
         score: 0,
         spawnTimer: 0.6,
         elapsed: 0,
@@ -60,7 +62,7 @@ window.Games.fruit = {
       });
       lane.flash = 0.12;
       if (hitBomb) {
-        lane.lives = 0;
+        lane.lives = Math.max(0, lane.lives - BOMB_PENALTY);
         spawnParticles(lane, lane.bladeX, H * 0.5, '#ff4757');
       }
     }
