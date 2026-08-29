@@ -106,6 +106,7 @@ const RESET_THRESHOLD = 11;  // magnitude must drop back below this to arm again
 const MAX_EXPECTED = 30;     // magnitude that counts as a "full power" swing
 let lastGamma = 0;
 let lastBeta = 0;
+let betaBaseline = null; // captured on first orientation reading so guard is relative to how you're actually holding the phone
 
 function startSensors() {
   window.addEventListener('deviceorientation', onOrientation);
@@ -117,6 +118,7 @@ function onOrientation(e) {
   const beta = e.beta || 0;   // front-back tilt, -180..180
   lastGamma = gamma;
   lastBeta = beta;
+  if (betaBaseline === null) betaBaseline = beta; // treat your first reading as "neutral"
 
   // Update visual tilt dot
   const clamped = Math.max(-45, Math.min(45, gamma));
@@ -128,7 +130,7 @@ function onOrientation(e) {
   if (now - lastTiltSend > TILT_SEND_INTERVAL && roomCode) {
     lastTiltSend = now;
     const normalized = Math.max(-1, Math.min(1, gamma / 45)); // -1..1
-    const guard = currentGame === 'sword' && beta < -25;
+    const guard = currentGame === 'sword' && (beta - betaBaseline) < -15;
     if (guard) swingZone.style.setProperty('--accent', '#00f0ff');
     socket.emit('controller-input', { type: 'tilt', payload: { value: normalized, beta, guard } });
   }
